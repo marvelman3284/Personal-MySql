@@ -1,7 +1,11 @@
+from time import sleep
 import mysql.connector
-from rich.prompt import Prompt
+from rich.prompt import Confirm, Prompt
 from rich.console import Console
 from rich.table import Table
+from rich import print
+from rich.panel import Panel
+from rich.progress import track
 import re
 
 db = mysql.connector.connect(host='192.168.86.38',
@@ -12,13 +16,23 @@ db = mysql.connector.connect(host='192.168.86.38',
 c = db.cursor()
 
 
+def format(string: str) -> str:
+    pattern = r'[(),\']'
+    string = re.sub(pattern, '', str(string))
+
+    return string
+
+
 def insert():
     choices = []
     info = []
+    progress = []
+
+    console = Console()
+
     c.execute("SHOW TABLES")
     for i in c:
-        pattern = r'[(),\']'
-        i = re.sub(pattern, '', str(i))
+        i = format(i)
         choices.append(str(i))
 
     table = Prompt.ask("What table do you want to insert data into?",
@@ -35,6 +49,8 @@ def insert():
             if j == 'id':
                 break
 
+            progress.append(j)
+
             data = str(input(f'{j}:'))
             info.append(data)
 
@@ -46,14 +62,18 @@ def insert():
 
         db.commit()
 
+        with console.status("[dark green] Inserting...") as status:
+            while progress:
+                task = progress.pop(0)
+                sleep(1)
+                print(f"Inserted {task} [underline bold green]successfully[/underline bold green]!")
 
 def view():
     choices = []
 
     c.execute("SHOW TABLES")
     for i in c:
-        pattern = r'[(),\']'
-        i = re.sub(pattern, '', str(i))
+        i = format(i)
         choices.append(str(i))
 
     table = Prompt.ask("What table do you want to view the data for?",
@@ -63,22 +83,77 @@ def view():
     c.execute("SHOW COLUMNS FROM " + table)
 
     for column in c:
-        pattern = r'[(),\']'
-        column = re.sub(pattern, '', str(column[0]))
+        column = format(column[0])
         grid.add_column(column, justify='center')
 
     c.execute("SELECT * FROM " + table)
+
     for data in c:
-        grid.add_row(str(*data))
+
+        data = list(data)
+
+        grid_values = []
+
+        for i in data:
+            i = format(i)
+            grid_values.append(i)
+
+        grid.add_row(*grid_values)
 
     console = Console()
     console.print(grid)
+    return table
 
 
-if __name__ == "__main__":
-    wut = input("What do you want to do (view or insert data):")
+def delete():
+    data = []
+    table = view()
+
+    c.execute("SELECT id FROM " + table)
+
+    for i in c:
+        i = str(i)
+        data.append(i)
+
+    print("[bold red] Which row do you want to delete: ")
+
+    for i in data:
+        i = format(i)
+        print(Panel(str(i)))
+
+    del_row = str(input("Choice: "))
+
+    ok = Confirm.ask("Are you sure you want to delete row {}".format(del_row))
+
+    try:
+        assert ok
+
+        c.execute("DELETE FROM contacts WHERE id={}".format(del_row))
+
+        for _ in track(range(100), description='Deleting...'):
+            sleep(0.03)
+
+        db.commit()
+
+    except AssertionError:
+        exit()
+
+
+while __name__ == "__main__":
+    wut = Prompt.ask("What do you want to do?:",
+                     choices=['view', 'insert', 'delete', 'exit'])
 
     if wut.lower() == 'view':
         view()
+        sleep(1)
+
     elif wut.lower() == 'insert':
         insert()
+        sleep(1)
+
+    elif wut.lower() == 'delete':
+        delete()
+        sleep(1)
+
+    elif wut.lower() == 'exit':
+        exit()
