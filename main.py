@@ -17,6 +17,15 @@ c = db.cursor()
 
 
 def format(string: str) -> str:
+    """
+    Removes uneeded characters using regex
+
+    Args:
+        string (str): The string the needs characters removed
+
+    Returns:
+        str: The new string without any of the uneeded characters
+    """
     pattern = r'[(),\']'
     string = re.sub(pattern, '', str(string))
 
@@ -24,6 +33,9 @@ def format(string: str) -> str:
 
 
 def insert():
+    """
+    Inserts data into a table
+    """
     choices = []
     info = []
     progress = []
@@ -62,13 +74,19 @@ def insert():
 
         db.commit()
 
-        with console.status("[dark green] Inserting...") as status:
+        with console.status("[dark green] Inserting..."):
             while progress:
                 task = progress.pop(0)
                 sleep(1)
-                print(f"Inserted {task} [underline bold green]successfully[/underline bold green]!")
+                print(
+                    f"Inserted {task} [underline bold green]successfully[/underline bold green]!"
+                )
+
 
 def view():
+    """
+    Views data from a selected table in the form of a table 
+    """
     choices = []
 
     c.execute("SHOW TABLES")
@@ -106,6 +124,9 @@ def view():
 
 
 def delete():
+    """
+    Deletes data from a selected table
+    """
     data = []
     table = view()
 
