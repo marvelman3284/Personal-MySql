@@ -1,13 +1,3 @@
-"""
-TODO's
-- Edit feature
-    - show table
-    - ask which id (row) to edit
-    - ask which column to edit
-    - take input for edit
-    - commit to db
-"""
-
 from time import sleep
 import mysql.connector
 from rich.prompt import Confirm, Prompt
@@ -228,9 +218,40 @@ def sort():
     return table
 
 
+def edit():
+    """
+    Edit a specific piece of data based on its id and column
+    """
+    ids = []
+    columns = []
+    table = view()
+
+    c.execute("SELECT `id` FROM {}".format(table))
+    for id in c:
+        id = format(id[0])
+        ids.append(id)
+
+    c.execute("SHOW COLUMNS FROM " + table)
+
+    for column in c:
+        column = format(column[0])
+        if column == 'id': break
+        columns.append(column)
+
+    row_id = Prompt.ask('What is the id of the row you want to edit?',
+                        choices=ids)
+    col = Prompt.ask('Which column do you want to edit?', choices=columns)
+    new_val = str(input('What is the new value: '))
+
+    c.execute('UPDATE {} SET `{}` = \'{}\' WHERE `id` = {}'.format(
+        table, col, new_val, row_id))
+    db.commit()
+
+
 while __name__ == "__main__":
-    wut = Prompt.ask("What do you want to do?:",
-                     choices=['view', 'insert', 'delete', 'sort', 'exit'])
+    wut = Prompt.ask(
+        "What do you want to do?:",
+        choices=['view', 'insert', 'delete', 'sort', 'edit', 'exit'])
 
     if wut.lower() == 'view':
         view()
@@ -246,6 +267,10 @@ while __name__ == "__main__":
 
     elif wut.lower() == 'sort':
         sort()
+        sleep(1)
+
+    elif wut.lower() == 'edit':
+        edit()
         sleep(1)
 
     elif wut.lower() == 'exit':
