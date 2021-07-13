@@ -1,3 +1,13 @@
+"""
+TODO's
+- Edit feature
+    - show table
+    - ask which id (row) to edit
+    - ask which column to edit
+    - take input for edit
+    - commit to db
+"""
+
 from time import sleep
 import mysql.connector
 from rich.prompt import Confirm, Prompt
@@ -15,6 +25,8 @@ db = mysql.connector.connect(host='192.168.86.38',
 
 c = db.cursor()
 
+# MISC FUNCTIONS
+
 
 def format(string: str) -> str:
     """
@@ -30,6 +42,9 @@ def format(string: str) -> str:
     string = re.sub(pattern, '', str(string))
 
     return string
+
+
+# DATA OPERATION FUNCTIONS
 
 
 def insert():
@@ -160,9 +175,62 @@ def delete():
         exit()
 
 
+def sort():
+    """
+    Sorts given data using the mysql `ORDER BY` statement
+    """
+    choices = []
+    columns = []
+
+    c.execute("SHOW TABLES")
+    for i in c:
+        i = format(i)
+        choices.append(str(i))
+
+    table = Prompt.ask("What table do you want to view the data for?",
+                       choices=choices)
+
+    c.execute("SHOW COLUMNS FROM " + table)
+
+    for column in c:
+        column = format(column[0])
+        columns.append(column)
+
+    sort_column = Prompt.ask('Which column do you want to sort by?',
+                             choices=columns)
+    sort_way = Prompt.ask('Would you like to sort ascending or descending?',
+                          choices=['asc', 'desc'])
+
+    grid = Table(title=table, show_lines=True)
+    c.execute("SHOW COLUMNS FROM " + table)
+
+    for column in c:
+        column = format(column[0])
+        grid.add_column(column, justify='center')
+
+    c.execute('SELECT * FROM {} ORDER BY `{}` {}'.format(
+        table, sort_column, sort_way))
+
+    for data in c:
+
+        data = list(data)
+
+        grid_values = []
+
+        for i in data:
+            i = format(i)
+            grid_values.append(i)
+
+        grid.add_row(*grid_values)
+
+    console = Console()
+    console.print(grid)
+    return table
+
+
 while __name__ == "__main__":
     wut = Prompt.ask("What do you want to do?:",
-                     choices=['view', 'insert', 'delete', 'exit'])
+                     choices=['view', 'insert', 'delete', 'sort', 'exit'])
 
     if wut.lower() == 'view':
         view()
@@ -174,6 +242,10 @@ while __name__ == "__main__":
 
     elif wut.lower() == 'delete':
         delete()
+        sleep(1)
+
+    elif wut.lower() == 'sort':
+        sort()
         sleep(1)
 
     elif wut.lower() == 'exit':
