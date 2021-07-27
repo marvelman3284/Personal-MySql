@@ -1,0 +1,5 @@
+as of writing this my understanding of how to make this work for my situation is basically:
+swagger.yml has to be updated with all the different names and such
+people.py has to be updated to pull data from the sql server instead of using a hard coded set of data
+both files need to be updated with the added complexity of multiple files and the different amount of columns
+
