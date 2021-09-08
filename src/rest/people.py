@@ -8,6 +8,14 @@ from datetime import datetime
 
 # 3rd party modules
 from flask import make_response, abort
+import mysql.connector
+
+db = mysql.connector.connect(host='192.168.86.38',
+                             user='marvel',
+                             password='starwars285',
+                             db='personal')
+
+c = db.cursor()
 
 
 def get_timestamp():
@@ -59,9 +67,8 @@ def read_one(lname):
 
     # otherwise, nope, not found
     else:
-        abort(
-            404, "Person with last name {lname} not found".format(lname=lname)
-        )
+        abort(404,
+              "Person with last name {lname} not found".format(lname=lname))
 
     return person
 
@@ -85,8 +92,7 @@ def create(person):
             "timestamp": get_timestamp(),
         }
         return make_response(
-            "{lname} successfully created".format(lname=lname), 201
-        )
+            "{lname} successfully created".format(lname=lname), 201)
 
     # Otherwise, they exist, that's an error
     else:
@@ -113,9 +119,8 @@ def update(lname, person):
 
     # otherwise, nope, that's an error
     else:
-        abort(
-            404, "Person with last name {lname} not found".format(lname=lname)
-        )
+        abort(404,
+              "Person with last name {lname} not found".format(lname=lname))
 
 
 def delete(lname):
@@ -129,12 +134,9 @@ def delete(lname):
     if lname in PEOPLE:
         del PEOPLE[lname]
         return make_response(
-            "{lname} successfully deleted".format(lname=lname), 200
-        )
+            "{lname} successfully deleted".format(lname=lname), 200)
 
     # Otherwise, nope, person to delete not found
     else:
-        abort(
-            404, "Person with last name {lname} not found".format(lname=lname)
-        )
-
+        abort(404,
+              "Person with last name {lname} not found".format(lname=lname))
